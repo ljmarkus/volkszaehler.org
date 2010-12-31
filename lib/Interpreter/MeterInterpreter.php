@@ -105,7 +105,7 @@ class MeterInterpreter extends Interpreter {
 		$values = array();
 		foreach ($pulses as $pulse) {
 			if (isset($last)) {
-				$values[] = $this->raw2differential($last, $pulse);
+				$values += $this->raw2differential($last, $pulse);
 				$last = $pulse;
 			}
 			else {
@@ -124,12 +124,19 @@ class MeterInterpreter extends Interpreter {
 	 */
 	protected function raw2differential(array $last, array $next) {
 		$delta = $next[0] - $last[0];
+		$power = $next[1] * (3600000 / (($this->channel->getProperty('resolution') / 1000) * $delta));
 
-		return array(
-			($next[0] - $delta / 2),	// timestamp
-			$next[1] * (3600000 / (($this->channel->getProperty('resolution') / 1000) * $delta)),	// value
-			$next[2]
-		);
+		$tuples = array();
+
+		if ($delta < 3600000) { // 1 hour threshold
+			$tuples[] = array($next[0], $power, $next[2]);
+		}
+		else { // below threshold
+			$tuples[] = array($last[0]+1, 0, $last[2]);
+			$tuples[] = array($next[0], 0, $next[2]);
+		}
+
+		return $tuples;
 	}
 }
 
