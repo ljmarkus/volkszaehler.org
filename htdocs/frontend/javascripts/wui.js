@@ -329,6 +329,7 @@ vz.wui.setTimeout = function() {
 	// clear an already set timeout
 	if (vz.wui.timeout != null) {
 		window.clearTimeout(vz.wui.timeout);
+		vz.wui.timeout = null;
 	}
 
 	var t = Math.max((vz.options.plot.xaxis.max - vz.options.plot.xaxis.min) / vz.options.tuples, vz.options.minTimeout);
@@ -340,8 +341,8 @@ vz.wui.setTimeout = function() {
 /**
  * Stop auto-refresh of graphs
  */
-vz.wui.clearTimeout = function() {
-	$('#refresh-time').html('');
+vz.wui.clearTimeout = function(text) {
+	$('#refresh-time').html(text || '');
 	
 	var rc = window.clearTimeout(vz.wui.timeout);
 	vz.wui.timeout = null;
@@ -555,8 +556,7 @@ vz.wui.drawPlot = function () {
 	
 	// disable automatic refresh if we are in past
 	if (vz.options.refresh && vz.options.plot.xaxis.max < new Date().getTime() - 1000) {
-		$('#refresh').attr('checked', vz.options.refresh = false);
-		vz.wui.clearTimeout();
+		vz.wui.clearTimeout('(suspended)');
 	}
 	else if (vz.options.refresh) {
 		vz.wui.setTimeout();
