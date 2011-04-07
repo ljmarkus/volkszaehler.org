@@ -41,6 +41,8 @@ class SensorInterpreter extends Interpreter {
 
 		$values = array();
 		foreach ($data as $reading) {
+			if (!$reading[2])
+				continue; // prevent division by zero when there is no more data
 			$values[] = $callback(array(
 				(float) $reading[0],
 				(float) $reading[1] / $reading[2],

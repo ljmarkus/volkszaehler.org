@@ -92,7 +92,7 @@ class MeterInterpreter extends Interpreter {
 		$last = $pulses->rewind();
 		$next = $pulses->next();
 		
-		while ($pulses->valid()) {
+		while ($pulses->valid() and $next) {
 			$tuple = $callback($this->raw2differential($last, $next));
 			
 			if (is_null($this->max) || $tuple[1] > $this->max[1]) {

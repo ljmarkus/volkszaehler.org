@@ -88,15 +88,25 @@ abstract class Interpreter {
 		$sql['where']	= ' WHERE channel_id = ?' . self::buildDateTimeFilterSQL($this->from, $this->to);
 		$sql['orderBy']	= ' ORDER BY timestamp ASC';
 
+		$query = '';
+		$bind = null;
 		if ($this->groupBy && $sql['groupFields'] = self::buildGroupBySQL($this->groupBy)) {
 			$sql['rowCount']	= 'SELECT COUNT(DISTINCT ' . $sql['groupFields'] . ')' . $sql['from'] . $sql['where'];
 			$sql['fields']		= ' MAX(timestamp) AS timestamp, SUM(value) AS value, COUNT(timestamp) AS count';
 			$sql['groupBy']		= ' GROUP BY ' . $sql['groupFields'];
+			$query = 'SELECT ' . $sql['fields'] . $sql['from'] . $sql['where'] . $sql['groupBy'] . $sql['orderBy'];
+			$bind = array($this->channel->getId());
 		}
 		else {
-			$sql['rowCount']	= 'SELECT COUNT(*)' . $sql['from'] . $sql['where'];
+			$sql['rowCount']	= 'SELECT COUNT(*)+3' . $sql['from'] . $sql['where'];
 			$sql['fields']		= ' timestamp, value, 1';
 			$sql['groupBy']		= '';
+			$common = 'SELECT ' . $sql['fields'] . $sql['from'];
+			$query = 
+				'(' . $common . ' WHERE channel_id = ? AND timestamp <= ' . $this->from . ' ORDER BY timestamp DESC LIMIT 1)'.
+				' UNION (' . $common . $sql['where'] . $sql['orderBy'] . ')' .
+				' UNION (' . $common . ' WHERE channel_id = ? AND timestamp >= ' . $this->to . ' ORDER BY timestamp ASC LIMIT 2)';
+			$bind = array($this->channel->getId(), $this->channel->getId(), $this->channel->getId());
 		}
 
 		// get total row count for grouping
@@ -104,7 +114,7 @@ abstract class Interpreter {
 		
 		if ($this->rowCount > 0) {
 			// query for data
-			$stmt = $this->conn->executeQuery('SELECT ' . $sql['fields'] . $sql['from'] . $sql['where'] . $sql['groupBy'] . $sql['orderBy'], array($this->channel->getId()));
+			$stmt = $this->conn->executeQuery($query, $bind);
 
 			return new DataIterator($stmt, $this->rowCount, $this->tupleCount);
 		}

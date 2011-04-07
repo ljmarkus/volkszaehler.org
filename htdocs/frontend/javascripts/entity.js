@@ -194,7 +194,8 @@ Entity.prototype.getRow = function() {
 Entity.prototype.loadData = function() {
 	//var delta = vz.options.plot.xaxis.max - vz.options.plot.xaxis.min;
 	//var offset = delta * 0.1;
-	var offset = 1000*30*60; // load additional data to avoid paddings
+	//var offset = 1000*30*60; // load additional data to avoid paddings
+	var offset = 0;
 
 	return vz.load({
 		controller: 'data',
